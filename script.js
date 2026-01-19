@@ -1,5 +1,9 @@
 document.addEventListener('DOMContentLoaded', function () {
     console.log('Portfolio iOS prêt !');
+    
+    // Initialisation d'EmailJS avec vos identifiants
+    // Remplacer YOUR_PUBLIC_KEY par votre clé publique EmailJS
+    emailjs.init("13uhnx4ywp64w0KDy");
 
     // Gestion du formulaire de contact
     const contactForm = document.getElementById('formulaire-contact');
@@ -9,17 +13,51 @@ document.addEventListener('DOMContentLoaded', function () {
         contactForm.addEventListener('submit', function (event) {
             event.preventDefault();
             
+            // Récupération des données du formulaire
+            const formData = {
+                nom: document.getElementById('nom').value,
+                email: document.getElementById('email').value,
+                sujet: document.getElementById('sujet').value,
+                message: document.getElementById('message').value,
+                to_email: "jeanloickone@gmail.com" // Votre adresse email
+            };
+            
+            // Validation
+            if (!formData.nom || !formData.email || !formData.sujet || !formData.message) {
+                showMessage('Veuillez remplir tous les champs obligatoires', 'error');
+                return;
+            }
+            
+            // Vérification de l'email
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(formData.email)) {
+                showMessage('Veuillez entrer une adresse email valide', 'error');
+                return;
+            }
+            
             // Ajouter l'état de chargement
             const submitBtn = contactForm.querySelector('button[type="submit"]');
             const originalText = submitBtn.innerHTML;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
             submitBtn.disabled = true;
             
-            // Simuler l'envoi (remplacez par votre endpoint Formspree)
-            setTimeout(() => {
+            // Envoi via EmailJS
+            emailjs.send("service_1socitl", "template_jtmxw1q", {
+                from_name: formData.nom,
+                from_email: formData.email,
+                subject: formData.sujet,
+                message: formData.message,
+                to_email: formData.to_email,
+                date: new Date().toLocaleString('fr-FR'),
+                reply_to: formData.email // Important pour pouvoir répondre
+            })
+            .then(function(response) {
+                console.log('Email envoyé avec succès!', response);
+                
                 // Afficher la confirmation
+                confirmationMessage.innerHTML = '<i class="fas fa-check-circle"></i> Message envoyé avec succès ! Je vous répondrai dans les plus brefs délais.';
+                confirmationMessage.className = 'ios-alert ios-alert-success';
                 confirmationMessage.style.display = 'flex';
-                confirmationMessage.style.color = 'var(--ios-success)';
                 
                 // Réinitialiser le bouton
                 submitBtn.innerHTML = originalText;
@@ -32,8 +70,46 @@ document.addEventListener('DOMContentLoaded', function () {
                 setTimeout(() => {
                     confirmationMessage.style.display = 'none';
                 }, 5000);
-            }, 2000);
+            })
+            .catch(function(error) {
+                console.error('Erreur lors de l\'envoi:', error);
+                
+                // Afficher l'erreur
+                confirmationMessage.innerHTML = '<i class="fas fa-exclamation-circle"></i> Une erreur est survenue. Veuillez réessayer ou me contacter directement à jeanloickone@gmail.com';
+                confirmationMessage.className = 'ios-alert';
+                confirmationMessage.style.background = 'rgba(255, 59, 48, 0.1)';
+                confirmationMessage.style.color = 'var(--ios-error)';
+                confirmationMessage.style.border = '1px solid rgba(255, 59, 48, 0.2)';
+                confirmationMessage.style.display = 'flex';
+                
+                // Réinitialiser le bouton
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                
+                // Masher le message d'erreur après 5 secondes
+                setTimeout(() => {
+                    confirmationMessage.style.display = 'none';
+                }, 5000);
+            });
         });
+    }
+
+    // Fonction pour afficher des messages temporaires
+    function showMessage(message, type = 'success') {
+        const tempAlert = document.createElement('div');
+        tempAlert.className = `ios-alert ${type === 'error' ? 'ios-alert-error' : 'ios-alert-success'}`;
+        tempAlert.style.position = 'fixed';
+        tempAlert.style.top = '20px';
+        tempAlert.style.right = '20px';
+        tempAlert.style.zIndex = '10000';
+        tempAlert.style.display = 'flex';
+        tempAlert.innerHTML = `<i class="fas ${type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i> ${message}`;
+        
+        document.body.appendChild(tempAlert);
+        
+        setTimeout(() => {
+            tempAlert.remove();
+        }, 3000);
     }
 
     // Animation au défilement iOS-style
@@ -180,6 +256,13 @@ document.addEventListener('DOMContentLoaded', function () {
             0%, 100% { transform: translateY(0) rotate(0deg); }
             50% { transform: translateY(-20px) rotate(180deg); }
         }
+        
+        /* Style pour les alertes d'erreur */
+        .ios-alert-error {
+            background: rgba(255, 59, 48, 0.1);
+            color: var(--ios-error);
+            border: 1px solid rgba(255, 59, 48, 0.2);
+        }
     `;
     document.head.appendChild(style);
 
@@ -210,6 +293,19 @@ document.addEventListener('DOMContentLoaded', function () {
     document.addEventListener('mousedown', function() {
         document.body.classList.remove('keyboard-navigation');
     });
+    
+    // Vérifier que EmailJS est bien chargé
+    if (typeof emailjs === 'undefined') {
+        console.error('EmailJS n\'est pas chargé correctement');
+        // Recharger la bibliothèque en cas d'échec
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js';
+        script.onload = function() {
+            emailjs.init("13uhnx4ywp64w0KDy");
+            console.log('EmailJS rechargé avec succès');
+        };
+        document.head.appendChild(script);
+    }
 });
 
 // Service Worker pour le mode hors ligne (optionnel)

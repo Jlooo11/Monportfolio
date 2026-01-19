@@ -1105,6 +1105,10 @@ body {
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
 }
 
+.olfactive-preview {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
 .preview-content {
     text-align: center;
     color: white;
